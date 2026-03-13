@@ -7,5 +7,5 @@ This experiment demonstrates how to visualize data using the **Arduino Serial Pl
 - Serial.println() data streaming
 - Understanding waveform behavior
 
-##Output
+## Output
 A sine wave generated in the serial plotter.
