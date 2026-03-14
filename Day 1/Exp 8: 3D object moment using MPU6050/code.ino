@@ -5,13 +5,13 @@
 
 /* ================= WIFI CONFIG ================= */
 
-// "YOUR_WIFI_NAME"
-// "YOUR_WIFI_PASSWORD"
+const char* ssid = "YOUR_WIFI_NAME";
+const char* password = "YOUR_WIFI_PASSWORD";
 
 /* ================= OBJECTS ================= */
 
-// mpu 6050 object creation
-// websocket object creation
+MPU6050 mpu;
+WebSocketsServer webSocket(81);
 
 /* ================= SENSOR VARIABLES ================= */
 
@@ -36,14 +36,14 @@ void setup() {
 
   Serial.print("Connecting to WiFi");
 
-  while (// wifi status keyword() != WL_CONNECTED) {
+  while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
   }
 
   Serial.println();
   Serial.print("ESP32 IP Address: ");
-  // print local ip address using keyword
+  Serial.println(WiFi.localIP());
 
   /* ---------- I2C ---------- */
 
@@ -101,7 +101,7 @@ void loop() {
 
   /* ---------- SEND TO CLIENT ---------- */
 
- // data transfer
+  webSocket.broadcastTXT(data);
 
   /* ---------- DEBUG ---------- */
 
