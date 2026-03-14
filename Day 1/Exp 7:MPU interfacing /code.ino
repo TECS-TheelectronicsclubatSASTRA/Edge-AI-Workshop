@@ -9,9 +9,9 @@ void setup() {
 
   Serial.println("Initializing MPU6050...");
 
-  mpu.initialize();
+  // Initialize MPU6050
 
-  if (mpu.testConnection()) {
+  if (// mpu6050 test connection) {
     Serial.println("MPU6050 connection successful!");
   } else {
     Serial.println("MPU6050 connection failed!");
@@ -23,7 +23,7 @@ void loop() {
   int16_t ax, ay, az;
   int16_t gx, gy, gz;
 
-  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  // get the motion 
  
   Serial.print("Accel: ");
   Serial.print(ax); Serial.print(" ");
