@@ -1,4 +1,4 @@
-#include //required library 
+#include <WiFi.h>
 
 void setup() {
   Serial.begin(115200);
@@ -8,10 +8,12 @@ void setup() {
 void loop() {
 Serial.println("Scanning WiFi...");
 
- //scan the networks present 
+  int networks = WiFi.scanNetworks();
 
   for (int i = 0; i < networks; i++) {
-   //print the available networks
+    Serial.print(WiFi.SSID(i));
+    Serial.print("  Signal:");
+    Serial.println(WiFi.RSSI(i));
   }
 
   delay(5000);
