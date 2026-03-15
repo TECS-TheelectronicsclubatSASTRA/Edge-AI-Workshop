@@ -1,7 +1,8 @@
 void setup() {
-   // Start serial communication
+  Serial.begin(115200);   // Start serial communication
 }
 
 void loop() {
-   //print a message
-  }
+  Serial.println("Welcome to Edge AI Workshop :)");
+  delay(1000);
+}
