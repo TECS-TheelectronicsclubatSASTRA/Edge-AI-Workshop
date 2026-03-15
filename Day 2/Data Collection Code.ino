@@ -8,21 +8,18 @@ MPU6050 mpu;
 /* =============================
     WIFI CONFIG
 ============================= */
-const char* ssid = "ENTER YOUR SSID";
-const char* password = "ENTER YOUR PASSWORD";
-const char* serverName = "url";
-
-
+const char* ssid = "SSID";
+const char* password = "Password";
+const char* serverName = "Your URL";
 /* =============================
    CALIBRATION VALUES
-   paste your values!
 ============================= */
-float xMax = ;
-float xMin = ;
-float yMax = ;
-float yMin = ;
-float zMax = ;
-float zMin = ;
+float xMax = 1.03;
+float xMin = -0.96;
+float yMax = 1.02;
+float yMin = -1.00;
+float zMax = 1.26;
+float zMin = -0.79;
 
 float xOffset, yOffset, zOffset;
 float xScale, yScale, zScale;
@@ -30,7 +27,9 @@ float xScale, yScale, zScale;
 /* =============================
    DATASET SETTINGS
 ============================= */
-//define window size ,sample rate hertz, sampling interval
+#define WINDOW_SIZE 200
+#define SAMPLE_RATE_HZ 100
+#define SAMPLE_INTERVAL 10  // ms
 
 float Ax_arr[WINDOW_SIZE];
 float Ay_arr[WINDOW_SIZE];
@@ -38,18 +37,16 @@ float Az_arr[WINDOW_SIZE];
 float Gx_arr[WINDOW_SIZE];
 float Gy_arr[WINDOW_SIZE];
 float Gz_arr[WINDOW_SIZE];
-//why isn't a "int" enough 
-
 
 /* =============================
    SETUP
 ============================= */
 void setup() {
-  //set baud rate to 115200
-  //Iniatialise the communication protocol
+  Serial.begin(115200);
+  Wire.begin(21, 22);
 
   Serial.println("Initializing MPU6050...");
-  //intialise the mpu
+  mpu.initialize();
 
   if (!mpu.testConnection()) {
     Serial.println("MPU6050 connection failed!");
@@ -59,17 +56,21 @@ void setup() {
   mpu.setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
 
   // Compute calibration
-
   xOffset = (xMax + xMin) / 2.0;
-  //calculate yOffset and zOffset
+  yOffset = (yMax + yMin) / 2.0;
+  zOffset = (zMax + zMin) / 2.0;
 
   xScale = 2.0 / (xMax - xMin);
-  //calculate yScale and zScale
+  yScale = 2.0 / (yMax - yMin);
+  zScale = 2.0 / (zMax - zMin);
 
   Serial.println("Connecting to WiFi...");
-  //initalise wifi with the right parameters 
+  WiFi.begin(ssid, password);
 
-  //check for connecticity
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
 
   Serial.println("\nWiFi Connected!");
   Serial.println("Type Z, V, R, or I and press ENTER to record.");
@@ -78,7 +79,6 @@ void setup() {
 /* =============================
    RECORD FUNCTION
 ============================= */
-
 void recordGesture(String label) {
 
   Serial.println("Prepare...");
@@ -88,20 +88,35 @@ void recordGesture(String label) {
 
   unsigned long lastSampleTime = millis();
 
-  //open a for loop with iteration set up to winow
-  for  {
+  for (int i = 0; i < WINDOW_SIZE; i++) {
 
     while (millis() - lastSampleTime < SAMPLE_INTERVAL);
     lastSampleTime += SAMPLE_INTERVAL;
 
-    //declare variables
+    int16_t ax_raw, ay_raw, az_raw;
+    int16_t gx_raw, gy_raw, gz_raw;
 
-    //get motion
+    mpu.getMotion6(&ax_raw, &ay_raw, &az_raw,
+                   &gx_raw, &gy_raw, &gz_raw);
 
-    //calibrate 
+    float Ax = ax_raw / 16384.0;
+    float Ay = ay_raw / 16384.0;
+    float Az = az_raw / 16384.0;
 
+    Ax = xScale * (Ax - xOffset);
+    Ay = yScale * (Ay - yOffset);
+    Az = zScale * (Az - zOffset);
 
-    //store inside array
+    float Gx = gx_raw / 131.0;
+    float Gy = gy_raw / 131.0;
+    float Gz = gz_raw / 131.0;
+
+    Ax_arr[i] = Ax;
+    Ay_arr[i] = Ay;
+    Az_arr[i] = Az;
+    Gx_arr[i] = Gx;
+    Gy_arr[i] = Gy;
+    Gz_arr[i] = Gz;
   }
 
   Serial.println("Recording complete.");
@@ -113,11 +128,14 @@ void recordGesture(String label) {
 ============================= */
 void sendBatchToGoogle(String label) {
 
-  //check for wifi connectiviity
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi not connected!");
+    return;
+  }
 
-  //object creation
-  //begin
-  //add header 
+  HTTPClient http;
+  http.begin(serverName);
+  http.addHeader("Content-Type", "application/json");
 
   String json = "{";
   json += "\"label\":\"" + label + "\",";
@@ -140,15 +158,14 @@ void sendBatchToGoogle(String label) {
   json += "]}";
 
   Serial.println("Sending data to Google Sheets...");
-  //post it
+  int response = http.POST(json);
 
   Serial.print("HTTP Response Code: ");
-  //get the response
-  //variable to get the code 
-Serial.println(httpCode);
+  Serial.println(response);
+  int httpCode = http.GET();
+  Serial.println(httpCode);
 
-
-  //end posting
+  http.end();
   Serial.println("Done.\n");
 }
 
@@ -157,12 +174,15 @@ Serial.println(httpCode);
 ============================= */
 void loop() {
 
-  //check for serial monitor {
+  if (Serial.available()) {
 
-    //declare input as string 
-    //align the right input
+    String input = Serial.readStringUntil('\n');
+    input.trim();
 
-    
-    //call the right function
+   
+    if (input == "Z") recordGesture("zigzag");
+    else if (input == "V") recordGesture("vertical");
+    else if (input == "R") recordGesture("random");
+    else if (input == "I") recordGesture("idle");
   }
 }
