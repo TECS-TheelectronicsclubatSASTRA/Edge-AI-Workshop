@@ -5,10 +5,10 @@ void setup() {
 void loop() {
   static float x = 0;
 
-  // generate wave
+  float y = 100 + sin(x); // generate wave
 
   Serial.println(y);
 
-  // Increment x
+  x+= 0.1;  // Increment x
   delay(20);
 }
