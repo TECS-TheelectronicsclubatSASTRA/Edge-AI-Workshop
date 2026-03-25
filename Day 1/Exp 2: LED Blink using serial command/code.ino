@@ -1,4 +1,4 @@
-//declare the LED pin
+int ledPin = 2;
 
 void setup() {
   Serial.begin(115200);
@@ -6,14 +6,15 @@ void setup() {
 }
 
 void loop() {
-  if (Serial.available()) {  
-   //read the input as char
 
-   if (//condition for ON state) {
+  if (Serial.available()) {      
+    char data = Serial.read();
+
+   if (data == '1') {
       digitalWrite(ledPin, HIGH);
     }
 
-   else if (//condition for OFF state) {
+   else if (data == '0') {
       digitalWrite(ledPin, LOW);
     }
   }
