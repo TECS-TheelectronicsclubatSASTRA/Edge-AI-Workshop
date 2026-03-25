@@ -1,16 +1,15 @@
-#include //required library
+#include <WiFi.h>
 
 void setup() {
   Serial.begin(115200);
   delay(2000);
 
   WiFi.mode(WIFI_STA);
-    // initialize WiFi stack
+  WiFi.begin();   // initialize WiFi stack
 
   Serial.print("ESP32 MAC Address: ");
- //get mac address
+  Serial.println(WiFi.macAddress());
 }
 
 void loop() {
-//is it required?
 }
